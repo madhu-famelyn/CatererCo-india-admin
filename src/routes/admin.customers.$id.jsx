@@ -17,21 +17,33 @@ export const Route = createFileRoute("/admin/customers/$id")({
 function CustomerDetail() {
     const { id } = Route.useParams();
     const { fmt } = useCurrency();
-    const numericId = String(id).replace("CU-", "");
+    const cleanId = String(id).replace(/^CU-0*/i, "") || String(id);
 
-    const { data: usersList = [] } = useQuery({
-        queryKey: ["admin-users-detail"],
+    const { data: rawUser = null } = useQuery({
+        queryKey: ["admin-user-detail", id],
         queryFn: async () => {
             try {
-                const res = await fetch("http://localhost:8000/users");
+                const res = await fetch(`http://localhost:8000/users/${id}`);
                 if (res.ok) return await res.json();
             } catch (e) {}
-            return [];
+
+            try {
+                const resAll = await fetch("http://localhost:8000/users");
+                if (resAll.ok) {
+                    const all = await resAll.json();
+                    return all.find((u) => 
+                        String(u.id) === String(id) || 
+                        String(u.id) === cleanId || 
+                        String(u.email).toLowerCase() === String(id).toLowerCase()
+                    ) || null;
+                }
+            } catch (e) {}
+            return null;
         },
     });
 
     const { data: apiBookings = [] } = useQuery({
-        queryKey: ["admin-customer-bookings", numericId],
+        queryKey: ["admin-customer-bookings", id],
         queryFn: async () => {
             try {
                 const res = await fetch("http://localhost:8000/bookings/admin/all");
@@ -41,31 +53,38 @@ function CustomerDetail() {
         },
     });
 
-    const rawUser = usersList.find((u) => String(u.id) === String(numericId));
+    const custBookings = apiBookings.filter((b) => {
+        if (rawUser) {
+            if (b.customer_id && String(b.customer_id) === String(rawUser.id)) return true;
+            if (b.customer_email && String(b.customer_email).toLowerCase() === String(rawUser.email).toLowerCase()) return true;
+            if (b.customer && String(b.customer).toLowerCase().includes(String(rawUser.first_name || "").toLowerCase())) return true;
+        }
+        return String(b.customer).toLowerCase().includes(c?.name?.toLowerCase() || "") || String(b.id).includes(cleanId);
+    });
+
+    const bookingCity = custBookings?.[0]?.emirate || custBookings?.[0]?.address;
 
     const c = rawUser ? {
-        id: `CU-${rawUser.id}`,
-        name: `${rawUser.first_name || ""} ${rawUser.last_name || ""}`.trim() || rawUser.email,
-        email: rawUser.email,
-        phone: rawUser.phone || "Not Provided",
-        city: rawUser.city || rawUser.preferred_emirate || "—",
-        joinedAt: rawUser.created_at ? new Date(rawUser.created_at).toLocaleDateString() : "Recently",
+        id: `CU-${String(rawUser.id).padStart(3, "0")}`,
+        name: `${rawUser.first_name || ""} ${rawUser.last_name || ""}`.trim() || rawUser.email || "Customer Account",
+        email: rawUser.email || "—",
+        phone: rawUser.phone || "—",
+        city: rawUser.city || rawUser.preferred_emirate || bookingCity || "—",
+        joinedAt: rawUser.created_at ? new Date(rawUser.created_at).toLocaleDateString() : "—",
         totalSpent: rawUser.total_spent ?? 0,
         totalBookings: rawUser.bookings_count ?? 0,
         status: rawUser.is_verified ? "active" : "pending",
     } : {
-        id,
+        id: `CU-${id}`,
         name: "Customer Account",
-        email: "-",
-        phone: "-",
-        city: "—",
-        joinedAt: "-",
+        email: "—",
+        phone: "—",
+        city: bookingCity || "—",
+        joinedAt: "—",
         totalSpent: 0,
         totalBookings: 0,
         status: "active",
     };
-
-    const custBookings = apiBookings.filter((b) => String(b.customer).toLowerCase().includes(c.name.toLowerCase()) || String(b.id).includes(numericId));
 
     return (<>
       <PageHeader title={c.name} description={c.email} actions={<>

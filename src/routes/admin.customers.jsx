@@ -45,11 +45,12 @@ function CustomersPage() {
 
     const mappedUsers = usersList
         .filter((u) => u.role === "customer")
-        .map((u, index) => ({
-            id: `CU-${String(index + 1).padStart(3, "0")}`,
+        .map((u) => ({
+            id: `CU-${String(u.id).padStart(3, "0")}`,
             rawId: u.id,
-            name: `${u.first_name || ""} ${u.last_name || ""}`.trim() || "Customer Account",
+            name: `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email || "—",
             email: u.email,
+            phone: u.phone || "—",
             city: u.city || u.preferred_emirate || "—",
             totalBookings: u.bookings_count ?? 0,
             totalSpent: u.total_spent ?? 0,
@@ -71,7 +72,7 @@ function CustomersPage() {
             className: "text-right pr-6 w-48",
             render: (r) => (<div className="flex items-center justify-end gap-2">
           <Button asChild variant="ghost" size="sm">
-            <Link to="/admin/customers/$id" params={{ id: r.id }}>
+            <Link to="/admin/customers/$id" params={{ id: String(r.rawId) }}>
               <Eye className="mr-1 h-4 w-4"/> View
             </Link>
           </Button>

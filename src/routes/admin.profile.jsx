@@ -36,7 +36,7 @@ function ProfilePage() {
     try {
       const saved = localStorage.getItem("admin_profile");
       if (saved) return { ...DEFAULT_PROFILE, ...JSON.parse(saved) };
-    } catch (e) {}
+    } catch (e) { }
     return DEFAULT_PROFILE;
   });
 
