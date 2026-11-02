@@ -56,6 +56,7 @@ function CatererDetail() {
 
     const c = apiCaterer ? {
         id: apiCaterer.id,
+        displayId: apiCaterer.display_id || apiCaterer.id,
         name: apiCaterer.name || apiCaterer.business_name || "Caterer Profile",
         owner: apiCaterer.contact_person || apiCaterer.owner || "Not Provided",
         email: apiCaterer.email || "Not Provided",
@@ -118,7 +119,7 @@ function CatererDetail() {
     const isApproved = c.status === "approved" || c.status === "verified";
 
     return (<>
-      <PageHeader title={c.name} description={`Caterer ID: ${c.id}`} actions={<>
+      <PageHeader title={c.name} description={`Caterer ID: ${c.displayId || c.id}`} actions={<>
             <Button variant="outline" asChild><Link to="/admin/caterers"><ArrowLeft className="mr-2 h-4 w-4"/> Back</Link></Button>
             <Dialog>
               <DialogTrigger asChild>

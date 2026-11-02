@@ -157,7 +157,7 @@ function CaterersPage() {
     const mappedCaterers = caterersList.map((c, index) => ({
         id: c.id,
         sNo: index + 1,
-        displayId: `CAT-${String(index + 1).padStart(3, "0")}`,
+        displayId: c.display_id || `CAT-${String(index + 1).padStart(3, "0")}`,
         name: c.name || c.business_name || "New Caterer",
         owner: c.contact_person || c.contact || c.owner || c.owner_name || "Official Contact",
         city: c.emirate || c.location || c.city || "Hyderabad",
